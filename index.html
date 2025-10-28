@@ -68,15 +68,15 @@
         /* --- VENDING MACHINE SIZE ADJUSTMENT --- */
         .vending-machine-wrapper { /* New wrapper for overall machine sizing */
             width: 100%;
-            max-width: 700px; /* Slightly reduced max-width */
+        max-width: 820px; /* Slightly wider so receipt panel can sit comfortably inside */
             border: 3px solid var(--machine-border);
             background-color: var(--machine-accent);
             border-radius: 1rem; /* Rounded corners for the outer panel */
             padding: 0.35rem; /* Slightly more room horizontally */
             position: relative;
             z-index: 10; /* Ensure machine is above emojis */
-            /* Scale the whole machine to ~85% (smaller than previous 92%) */
-            transform: scale(0.85);
+            /* Scale the whole machine using a CSS variable so JS can adjust to fit viewport */
+            transform: scale(var(--vm-scale, 0.92));
             transform-origin: top center;
         }
 
@@ -262,9 +262,9 @@
 
         /* Floating receipt button (bottom-right) */
         .receipt-button {
-            position: fixed;
-            right: 18px;
-            bottom: 18px;
+            position: absolute; /* now positioned inside the vending machine */
+            right: 14px;
+            bottom: 14px;
             background: linear-gradient(180deg,#fff 0%, #f7f7f7 100%);
             border: 2px solid var(--machine-border);
             width: 56px;
@@ -281,10 +281,10 @@
 
         /* Small receipt panel that appears above the button */
         .receipt-panel {
-            position: fixed;
-            right: 18px;
-            bottom: 92px; /* sits above the button */
-            width: 280px;
+            position: absolute; /* positioned inside the vending machine */
+            right: 14px;
+            bottom: 88px; /* sits above the button inside the machine */
+            width: 320px; /* slightly wider panel */
             max-width: calc(100% - 40px);
             background: #fff;
             border: 2px solid var(--machine-border);
@@ -300,6 +300,39 @@
         .receipt-barcode .bar { background: #111; height: 100%; width: 2px; }
         .receipt-panel .close-btn { margin-top:8px; display:block; text-align:right; }
         .receipt-panel .close-btn button { background: transparent; border: none; color: var(--error-color); cursor: pointer; font-weight:700; }
+
+        /* Receipt paper animation */
+        .receipt-paper {
+            background: linear-gradient(180deg, #fff 0%, #fcfcfc 100%);
+            border-radius: 6px;
+            padding: 8px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            transform-origin: bottom center;
+            transform: translateY(10px) scaleY(0.96);
+            opacity: 0;
+            transition: transform 420ms cubic-bezier(.2,.9,.2,1), opacity 300ms ease;
+            overflow: hidden;
+        }
+        .receipt-paper.show {
+            transform: translateY(0) scaleY(1);
+            opacity: 1;
+        }
+        .receipt-money {
+            position: absolute;
+            right: 8px;
+            top: -22px;
+            background: #fff;
+            border-radius: 50%;
+            padding: 6px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+            transform: translateY(0) scale(0.8);
+            opacity: 0;
+            transition: transform 420ms cubic-bezier(.2,.9,.2,1), opacity 260ms ease;
+        }
+        .receipt-paper.show .receipt-money {
+            transform: translateY(-6px) scale(1);
+            opacity: 1;
+        }
 
     </style>
 </head>
@@ -386,19 +419,26 @@
                     </div>
                 </aside>
             </main>
+
+            <!-- Floating receipt button + panel (moved inside the vending machine) -->
+            <div id="receipt-panel" class="receipt-panel" aria-hidden="true">
+                <h4>Receipt</h4>
+                <div id="receipt-paper" class="receipt-paper" aria-hidden="true" style="position:relative;">
+                    <div class="receipt-money" aria-hidden="true">💵</div>
+                    <div id="receipt-content" class="receipt-lines">No receipts yet.</div>
+                    <div id="receipt-barcode" class="receipt-barcode" aria-hidden="true"></div>
+                </div>
+                <div class="close-btn"><button id="close-receipt-btn">CLOSE</button></div>
+            </div>
+
+            <div id="receipt-button" class="receipt-button" title="Show receipt">
+                <span class="paper-icon">🧾</span>
+            </div>
+
         </div>
     </div>
 
-    <div id="receipt-panel" class="receipt-panel" aria-hidden="true">
-        <h4>Receipt</h4>
-        <div id="receipt-content" class="receipt-lines">No receipts yet.</div>
-        <div id="receipt-barcode" class="receipt-barcode" aria-hidden="true"></div>
-        <div class="close-btn"><button id="close-receipt-btn">CLOSE</button></div>
-    </div>
-
-    <div id="receipt-button" class="receipt-button" title="Show receipt">
-        <span class="paper-icon">🧾</span>
-    </div>
+    
 
     <script>
     // --- Vending Machine State and Data ---
@@ -560,6 +600,12 @@
             
             droppingContainerEl.innerHTML = ''; 
 
+            // auto-print receipt when the item drops
+            if (lastTransaction) {
+                // Slight delay so the visual dropping completes before receipt shows
+                setTimeout(() => displayReceipt(lastTransaction), 220);
+            }
+
             topTrayMessageEl.textContent = `Enjoy your ${itemToCollect.name}! ${changeText}`;
             trayMessageEl.textContent = 'COLLECTED';
             
@@ -645,6 +691,58 @@
         trayEl.classList.add('dispensing');
 
         clearTimeout(displayTimer);
+    }
+
+    // --- Receipt display / auto-printing ---
+    let _receiptTimer = null;
+
+    /**
+     * Show the receipt panel and animate the paper. If `tx` is falsy, shows a "no recent transactions" note.
+     * options: { duration(ms): auto-close delay (default 6000), manual: boolean (don't auto-close immediately if true) }
+     */
+    function displayReceipt(tx, options = {}) {
+        const duration = options.duration || 6000;
+        const receiptPane = document.getElementById('receipt-panel');
+        const receiptPaper = document.getElementById('receipt-paper');
+        const receiptContent = document.getElementById('receipt-content');
+        const receiptBarcode = document.getElementById('receipt-barcode');
+
+        // populate content
+        if (tx) {
+            receiptContent.innerHTML = `Item: ${tx.name} (${tx.code})<br>Price: NT$${tx.price}<br>Change: NT$${tx.change}<br>--------------------<br>Time: ${tx.time}`;
+            // generate simple barcode look
+            receiptBarcode.innerHTML = '';
+            for (let i = 0; i < 40; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.width = `${Math.random() * 2 + 1}px`;
+                receiptBarcode.appendChild(bar);
+            }
+        } else {
+            receiptContent.innerHTML = 'No recent transactions.';
+            receiptBarcode.innerHTML = '';
+        }
+
+        // show pane and animate paper
+        receiptPane.style.display = 'block';
+        receiptPane.setAttribute('aria-hidden', 'false');
+        // small timeout to ensure CSS transition triggers
+        requestAnimationFrame(() => {
+            receiptPaper.classList.add('show');
+        });
+
+        // clear any previous auto-close
+        if (_receiptTimer) clearTimeout(_receiptTimer);
+
+        // if manual, still auto-close after duration but the user likely expects manual control; keep behavior friendly
+        _receiptTimer = setTimeout(() => {
+            receiptPaper.classList.remove('show');
+            // hide pane after animation ends
+            setTimeout(() => {
+                receiptPane.style.display = 'none';
+                receiptPane.setAttribute('aria-hidden', 'true');
+            }, 360);
+        }, duration);
     }
 
 
@@ -737,39 +835,53 @@
 
         // Function to show the receipt
         receiptBtn.addEventListener('click', () => {
-            if (lastTransaction) {
-                // Format the receipt text
-                receiptContent.innerHTML = `
-                    Item: ${lastTransaction.name} (${lastTransaction.code})<br>
-                    Price: NT$${lastTransaction.price}<br>
-                    Change: NT$${lastTransaction.change}<br>
-                    --------------------<br>
-                    Time: ${lastTransaction.time}
-                `;
-                
-                // Generate a simple fake barcode
-                receiptBarcode.innerHTML = ''; // Clear old barcode
-                for(let i = 0; i < 40; i++) {
-                    const bar = document.createElement('div');
-                    bar.className = 'bar';
-                    bar.style.width = `${Math.random() * 2 + 1}px`; // Random width
-                    receiptBarcode.appendChild(bar);
-                }
-
-            } else {
-                receiptContent.innerHTML = 'No recent transactions.';
-                receiptBarcode.innerHTML = ''; // Clear barcode
-            }
-            receiptPane.style.display = 'block';
-            receiptPane.setAttribute('aria-hidden', 'false');
+            // manual trigger: show last transaction (or fallback message)
+            displayReceipt(lastTransaction, { manual: true });
         });
 
         // Function to close the receipt
         closeReceiptBtn.addEventListener('click', () => {
-            receiptPane.style.display = 'none';
-            receiptPane.setAttribute('aria-hidden', 'true');
+            const receiptPane = document.getElementById('receipt-panel');
+            const receiptPaper = document.getElementById('receipt-paper');
+            // animate hide
+            receiptPaper.classList.remove('show');
+            setTimeout(() => {
+                receiptPane.style.display = 'none';
+                receiptPane.setAttribute('aria-hidden', 'true');
+            }, 360);
+            if (_receiptTimer) { clearTimeout(_receiptTimer); _receiptTimer = null; }
         });
+
+        // After layout settled, try to fit the vending machine vertically so bottom is visible
+        setTimeout(() => fitMachineToViewport(), 50);
     };
+
+    // Adjust vending machine scale so it fits fully in the viewport height
+    function fitMachineToViewport() {
+        const wrapper = document.querySelector('.vending-machine-wrapper');
+        if (!wrapper) return;
+
+        // Temporarily set scale to 1 to measure natural size
+        wrapper.style.setProperty('--vm-scale', '1');
+        const rect = wrapper.getBoundingClientRect();
+        const available = window.innerHeight - 12; // small margin
+
+        let target = 1;
+        if (rect.height > available) {
+            target = (available / rect.height) * 0.98; // leave tiny breathing room
+        }
+
+        // Don't upscale above 1
+        target = Math.min(1, target);
+        wrapper.style.setProperty('--vm-scale', String(target.toFixed(3)));
+    }
+
+    // Re-fit on resize (debounced)
+    let _fitTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(_fitTimer);
+        _fitTimer = setTimeout(fitMachineToViewport, 120);
+    });
 
     </script>
 </body>

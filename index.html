@@ -3,145 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glam Vender NTD - Dynamic LEDs</title>
+    <title>Simple Vender NTD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom font for a classy look */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@400;700&display=swap');
+        /* Custom font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
-        /* --- COLOR PALETTE AND BASE STYLES --- */
+        /* --- NEW COLOR PALETTE & BASE STYLES --- */
         :root {
-            --machine-bg: #f5f7fa; 
-            --accent-color: #007bff; 
-            --display-bg: #2c3e50; 
-            --glam-pink: #fce4ec; 
-            --glam-accent: #e91e63; /* Default Deep Pink */
-            --glam-text: #c2185b; 
-            --glam-gold: #FFD700;
-            --led-red: #e74c3c;
-            --led-green: #2ecc71;
+            --machine-bg: #f5e9d9;      /* Light beige machine body */
+            --machine-accent: #f9a86a;   /* Orange accent panels */
+            --display-bg: #a6d9e4;      /* Light blue display/keypad */
+            --machine-border: #3d353a;   /* Dark brown/black for borders/text */
+            --text-dark: #3d353a;
+            --button-bg: #a6d9e4;
+            --button-hover: #8acbda;
+            --success-color: #8fcc7a;    /* Simple green for success */
+            --error-color: #e57373;      /* Simple red for error */
+            --selected-gold: #fdd835;   /* Gold for selection highlight */
+            --tray-bg: #e0d5c6;         /* Inset tray color */
+            --tray-flap: #c0b4a5;       /* Flap color */
         }
         
-        /* --- NEW BACKGROUND STYLES (Your uploaded image) --- */
+        /* --- UPDATED BACKGROUND FOR FLOATING EMOJIS --- */
         body { 
             font-family: 'Inter', sans-serif; 
-            /* *** UPDATED: Using your uploaded vintage street image URL *** */
-            background-image: url('image_a9edc5.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            /* Slightly more opaque black overlay (0.5 or 50% opacity) for contrast */
-            background-color: rgba(0, 0, 0, 0.5); 
-            background-blend-mode: darken;
+            background-color: #f7f4f0; /* Simple light background */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem; /* Add some padding for smaller screens */
+            position: relative; /* Needed for absolute emoji positioning */
+            overflow: hidden; /* Hide overflowing emojis */
         }
 
-        /* Vending machine container */
+        /* --- FLOATING EMOJI STYLES --- */
+        .floating-emoji {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0; /* Start invisible */
+            pointer-events: none; /* Don't interfere with clicks */
+            animation: floatAndFade 10s infinite ease-in-out;
+            z-index: 0; /* Ensure emojis are behind the vending machine */
+        }
+
+        @keyframes floatAndFade {
+            0% {
+                transform: translate(var(--x-start), var(--y-start)) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            80% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(var(--x-end), var(--y-end)) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* --- VENDING MACHINE SIZE ADJUSTMENT --- */
+        .vending-machine-wrapper { /* New wrapper for overall machine sizing */
+            width: 100%;
+            max-width: 900px; /* Reduced max-width for better fit */
+            border: 4px solid var(--machine-border);
+            background-color: var(--machine-accent);
+            border-radius: 1.5rem; /* Rounded corners for the outer panel */
+            padding: 0.5rem; /* Reduced padding for the outer panel */
+            position: relative;
+            z-index: 10; /* Ensure machine is above emojis */
+        }
+
         #vending-machine {
             background: var(--machine-bg);
-            border: 4px solid var(--glam-accent);
-            position: relative;
-            transition: all 0.5s ease-in-out; /* Smooth transition for color change */
-            z-index: 10;
+            border: none; /* Border now on the wrapper */
+            width: 100%;
+            border-radius: 1rem; /* Slightly smaller border-radius inside */
+            padding: 1.5rem; /* Reduced padding inside */
         }
         
-        /* Simulated LED strip down the sides - Base Style */
-        #vending-machine::before,
-        #vending-machine::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 10px; 
-            border-radius: 5px;
-            z-index: 20;
-            transition: all 0.5s ease-in-out;
-        }
-        #vending-machine::before { left: -15px; }
-        #vending-machine::after { right: -15px; }
+        /* --- REMOVED LED STYLES --- */
 
-        /* --- DYNAMIC LED STYLES --- */
-        .led-default {
-            box-shadow: 0 0 50px rgba(233, 30, 99, 0.8), 0 15px 30px rgba(0, 0, 0, 0.5);
-            border-color: var(--glam-accent);
-        }
-        .led-default::before, 
-        .led-default::after {
-            background-color: var(--glam-accent);
-            box-shadow: 0 0 10px var(--glam-accent), inset 0 0 5px #fff;
-        }
-
-        .led-ready {
-            box-shadow: 0 0 50px rgba(46, 204, 113, 0.8), 0 15px 30px rgba(0, 0, 0, 0.5);
-            border-color: var(--led-green);
-        }
-        .led-ready::before, .led-ready::after {
-            background-color: var(--led-green);
-            box-shadow: 0 0 10px var(--led-green), inset 0 0 5px #fff;
-        }
-
-        .led-error {
-            box-shadow: 0 0 50px rgba(231, 76, 60, 0.8), 0 15px 30px rgba(0, 0, 0, 0.5);
-            border-color: var(--led-red);
-        }
-        .led-error::before, .led-error::after {
-            background-color: var(--led-red);
-            box-shadow: 0 0 10px var(--led-red), inset 0 0 5px #fff;
-        }
-        
-        .led-success {
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.8), 0 15px 30px rgba(0, 0, 0, 0.5);
-            border-color: var(--glam-gold);
-        }
-        .led-success::before, .led-success::after {
-            background-color: var(--glam-gold);
-            box-shadow: 0 0 10px var(--glam-gold), inset 0 0 5px #fff;
-        }
-        /* --- END DYNAMIC LED STYLES --- */
-        
-
-        /* --- PRODUCT CARD STYLES --- */
+        /* --- PRODUCT CARD STYLES (Simplified) --- */
         .product-card {
             transition: all 0.2s;
             background-color: white !important;
-            border-color: #e5e7eb !important;
+            border: 2px solid #eee !important;
         }
         .selected-card {
-            border: 3px solid var(--glam-gold) !important;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important;
+            border: 3px solid var(--selected-gold) !important;
+            box-shadow: 0 0 15px rgba(253, 216, 53, 0.5) !important;
             transform: scale(1.02);
         }
         .emoji-container {
             border-radius: 50%;
-            background: linear-gradient(to right, #f8bbd0, var(--glam-pink));
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: #fff;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .emoji-icon {
             font-size: 2.5rem; 
             line-height: 1;
         }
         
-        /* --- DISPENSE TRAY STYLES --- */
-        .eyelash-pattern {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 10'%3E%3Cpath fill='none' stroke='%23d81b60' stroke-width='0.5' d='M0,10 C5,0 15,0 20,10 M0,8 C5,-2 15,-2 20,8'%3E%3C/path%3E%3C/svg%3E");
-            background-size: 40px 20px;
-            opacity: 0.3;
+        /* --- DISPENSE TRAY STYLES (Simplified) --- */
+        #glam-tray-wrapper { 
+             background-color: var(--machine-bg);
         }
+        
         #dispense-tray {
-            height: 150px; 
-            border: 4px solid var(--glam-accent) !important;
-            background-color: var(--glam-pink) !important;
-            box-shadow: inset 0 0 15px rgba(233, 30, 99, 0.3);
+            height: 120px; /* Slightly reduced tray height */
+            border: 4px solid var(--machine-border) !important;
+            background-color: var(--tray-bg) !important;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
         }
-        .lips-push {
-            color: white;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-            background: linear-gradient(to top, #c2185b, #e91e63);
-            border-top: 2px solid #a8004f;
+        
+        .push-flap {
+            color: var(--text-dark);
+            font-weight: 600;
+            text-shadow: none;
+            background: var(--tray-flap);
+            border-top: 2px solid var(--machine-border);
             cursor: pointer; 
             transition: transform 0.1s;
+            /* Simplified shape for consistency with the new theme */
+            clip-path: none; 
+            border-radius: 0 0 0.5rem 0.5rem; /* Rounded bottom corners */
         }
 
-        /* --- DROPPING ITEM (BIGGER) --- */
+        /* --- DROPPING ITEM (Kept as-is, but color changed) --- */
         @keyframes drop-down {
             0% { transform: translate(-50%, -100px) scale(0.8); opacity: 0; }
             80% { transform: translate(-50%, 0); opacity: 1; }
@@ -152,102 +145,176 @@
             position: absolute;
             top: 10px;
             left: 50%;
-            /* Bumping the size to 80px for a more prominent drop! */
             width: 80px; 
             height: 80px; 
             border-radius: 50%;
-            background-color: var(--glam-gold);
+            background-color: var(--selected-gold); 
             animation: drop-down 1.2s ease-out forwards;
             z-index: 50;
             box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-            display: flex; /* Centers the icon inside the bigger circle */
+            display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.5rem; /* Make the emoji bigger to fill the space */
+            font-size: 3.5rem;
         }
-        /* --- END DROPPING ITEM --- */
+        
+        /* --- NEW THEME FOR CONTROL PANEL --- */
+        #display-screen {
+            background-color: var(--display-bg);
+            border-color: var(--machine-border);
+            color: var(--text-dark); /* Ensure text color is consistent */
+        }
+        #current-balance, #message {
+            color: var(--text-dark);
+        }
+        
+        /* Custom button styles replacing Tailwind for theming */
+        .control-button {
+            transition: background-color 0.2s;
+        }
+        .select-button {
+            background-color: var(--button-bg);
+            color: var(--text-dark);
+            font-weight: bold;
+        }
+        .select-button:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .money-button {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .money-button:hover {
+            background-color: #7fbf6a;
+        }
+        
+        .money-button-alt {
+            background-color: #a0d98e;
+            color: var(--text-dark);
+        }
+         .money-button-alt:hover {
+            background-color: #8fcc7a;
+        }
+        
+        .money-button-lg {
+            background-color: var(--selected-gold); /* Gold for 100 NT$ */
+            color: var(--text-dark);
+        }
+        .money-button-lg:hover {
+            background-color: #fccb0f;
+        }
+        
+        .return-button {
+             background-color: var(--error-color);
+            color: white;
+        }
+        .return-button:hover {
+            background-color: #e26363;
+        }
+        
+        /* Status text color overrides */
+        .status-ready { color: var(--success-color); }
+        .status-error { color: var(--error-color); }
+        #detail-balance { color: var(--button-bg); }
+
+        /* Footer styles */
+        .site-footer {
+            width: 100%;
+            text-align: center;
+            padding: 0.75rem 1rem;
+            color: #4b5563; /* gray-700 */
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 20; /* above emojis */
+            margin-top: 1rem;
+        }
+        .site-footer a { color: var(--text-dark); text-decoration: none; font-weight: 600; }
 
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
-    
-    <div id="vending-machine" class="w-full max-w-4xl rounded-3xl p-6 md:p-10 led-default">
+    <div id="emoji-background" style="position: absolute; inset: 0; z-index: 0; overflow: hidden;"></div>
 
-        <header class="text-center mb-6">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">The Justin Gwapo Select Vender (NTD)</h1>
-            <p class="text-gray-600 mt-1">Sleek. Fast. Refreshing.</p>
-        </header>
+    <div class="vending-machine-wrapper">
+        <div id="vending-machine" class="w-full rounded-2xl">
 
-        <main class="flex flex-col lg:flex-row gap-6">
+            <header class="text-center mb-6">
+                <h1 class="text-3xl md:text-4xl font-extrabold" style="color: var(--text-dark);">Simple Vender NTD</h1>
+                <p class="text-gray-600 mt-1">Select an item.</p>
+            </header>
 
-            <section class="lg:w-3/4 p-4 bg-gray-100 rounded-2xl shadow-inner">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b border-gray-300 pb-2">Select a Treat</h2>
-                <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    </div>
-                
-                <div id="glam-tray-wrapper" class="mt-8 pt-4 flex flex-col items-center relative overflow-hidden rounded-2xl p-4">
-                    <h3 class="text-xl font-extrabold mb-4" style="color: var(--glam-text);">💄 Get Your Glam Goodies 💅</h3>
+            <main class="flex flex-col lg:flex-row gap-6">
+
+                <section class="lg:w-3/4 p-4 bg-gray-100 rounded-2xl shadow-inner">
+                    <h2 class="text-xl font-bold mb-4 border-b border-gray-300 pb-2" style="color: var(--text-dark);">Select an Item</h2>
+                    <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        </div>
                     
-                    <div class="absolute inset-0 eyelash-pattern z-0"></div>
+                    <div id="glam-tray-wrapper" class="mt-8 pt-4 flex flex-col items-center relative overflow-hidden rounded-2xl p-4">
+                        <div id="dispense-tray" class="w-full h-40 rounded-lg flex flex-col items-center justify-center relative overflow-hidden z-10">
+                            
+                            <div id="push-area" class="push-flap absolute bottom-0 w-full h-3/4 flex items-center justify-center">
+                                <span id="tray-message" class="text-2xl z-20">PUSH</span>
+                            </div>
+                            
+                            <div class="absolute top-2 w-full text-center z-30">
+                                <span id="top-tray-message" style="color: var(--text-dark);" class="text-lg font-bold">Your items and change will appear here.</span>
+                            </div>
 
-                    <div id="dispense-tray" class="w-full h-40 rounded-lg flex flex-col items-center justify-center relative overflow-hidden z-10">
-                        
-                        <div id="push-area" class="absolute bottom-0 w-full h-3/4 flex items-center justify-center lips-push" style="clip-path: polygon(0 40%, 10% 20%, 30% 0%, 50% 20%, 70% 0%, 90% 20%, 100% 40%, 100% 100%, 0 100%);">
-                            <span id="tray-message" class="text-white font-black text-2xl z-20">PUSH</span>
+                            <div id="dropping-container" class="absolute inset-0 z-40 pointer-events-none"></div>
                         </div>
-                        
-                        <div class="absolute top-2 w-full text-center z-30">
-                            <span id="top-tray-message" style="color: var(--glam-accent);" class="text-lg font-bold">Your items and change will appear here.</span>
+                    </div>
+
+                        <footer class="site-footer" aria-label="Site footer">
+                            <div>© <span id="copyright-year">2025</span> JUSTINS pogi VENDING MACHINE. All rights reserved.</div>
+                        </footer>
+                </section>
+
+                <aside class="lg:w-1/4 flex flex-col gap-4">
+
+                    <div id="display-screen" class="p-4 rounded-xl shadow-2xl text-right h-24 flex flex-col justify-center items-end">
+                        <div id="current-balance" class="text-2xl font-extrabold">NT$0</div>
+                        <div id="message" class="text-lg font-normal mt-1">INSERT MONEY</div>
+                    </div>
+                    
+                    <div id="transaction-detail" class="bg-white p-3 rounded-xl shadow-inner border border-gray-200 text-sm">
+                        <h4 class="font-bold text-gray-800 mb-1 border-b pb-1">Transaction Status</h4>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Price:</span>
+                            <span id="detail-price" class="font-semibold text-gray-700">NT$0</span>
                         </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Balance:</span>
+                            <span id="detail-balance" class="font-semibold">NT$0</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600 mt-1">
+                            <span class="font-bold">Status:</span>
+                            <span id="detail-status" class="font-bold status-error">SELECT ITEM</span>
+                        </div>
+                    </div>
 
-                        <div id="dropping-container" class="absolute inset-0 z-40 pointer-events-none"></div>
+                    <div class="p-4 rounded-xl shadow-lg border border-gray-200" style="background-color: var(--machine-accent);">
+                        <h3 class="text-lg font-bold mb-3" style="color: var(--text-dark);">Product Code</h3>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="selection-input" maxlength="2" class="w-1/2 p-2 text-xl font-bold text-center bg-gray-100 text-gray-800 rounded-lg focus:ring-blue-500 focus:border-blue-500 border border-gray-300" placeholder="A1">
+                            <button onclick="selectProduct()" class="w-1/2 py-2 rounded-lg control-button select-button">SELECT</button>
+                        </div>
                     </div>
-                </div>
-            </section>
 
-            <aside class="lg:w-1/4 flex flex-col gap-4">
-
-                <div id="display-screen" class="bg-blue-900 p-4 rounded-xl shadow-2xl border-2 border-blue-700 text-right h-24 flex flex-col justify-center items-end">
-                    <div id="current-balance" class="text-2xl font-extrabold">NT$0</div>
-                    <div id="message" class="text-lg font-normal text-gray-100/80 mt-1">INSERT MONEY</div>
-                </div>
-                
-                <div id="transaction-detail" class="bg-white p-3 rounded-xl shadow-inner border border-gray-200 text-sm">
-                    <h4 class="font-bold text-gray-800 mb-1 border-b pb-1">Transaction Status</h4>
-                    <div class="flex justify-between text-gray-600">
-                        <span>Price:</span>
-                        <span id="detail-price" class="font-semibold text-gray-700">NT$0</span>
+                    <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3">Insert Money (NT$)</h3>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="insertMoney(5)" class="font-bold py-3 rounded-lg control-button money-button text-sm">NT$5</button>
+                            <button onclick="insertMoney(10)" class="font-bold py-3 rounded-lg control-button money-button-alt text-sm">NT$10</button>
+                            <button onclick="insertMoney(50)" class="font-bold py-3 rounded-lg control-button money-button-alt text-sm">NT$50</button>
+                            <button onclick="insertMoney(100)" class="col-span-3 font-bold py-3 rounded-lg control-button money-button-lg text-sm">NT$100</button>
+                        </div>
+                        <button onclick="returnChange()" class="mt-4 w-full font-bold py-3 rounded-lg control-button return-button">RETURN CHANGE</button>
                     </div>
-                    <div class="flex justify-between text-gray-600">
-                        <span>Balance:</span>
-                        <span id="detail-balance" class="font-semibold text-blue-600">NT$0</span>
-                    </div>
-                    <div class="flex justify-between text-gray-600 mt-1">
-                        <span class="font-bold">Status:</span>
-                        <span id="detail-status" class="font-bold text-red-500">SELECT ITEM</span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-800 mb-3">Product Code</h3>
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="selection-input" maxlength="2" class="w-1/2 p-2 text-xl font-bold text-center bg-gray-100 text-gray-800 rounded-lg focus:ring-blue-500 focus:border-blue-500 border border-gray-300" placeholder="A1">
-                        <button onclick="selectProduct()" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg control-button">SELECT</button>
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-800 mb-3">Insert Money (NT$)</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="insertMoney(5)" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg control-button text-sm">NT$5</button>
-                        <button onclick="insertMoney(10)" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 rounded-lg control-button text-sm">NT$10</button>
-                        <button onclick="insertMoney(50)" class="bg-green-400 hover:bg-green-300 text-gray-900 font-bold py-3 rounded-lg control-button text-sm">NT$50</button>
-                        <button onclick="insertMoney(100)" class="col-span-3 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 rounded-lg control-button text-sm">NT$100</button>
-                    </div>
-                    <button onclick="returnChange()" class="mt-4 w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg control-button">RETURN CHANGE</button>
-                </div>
-            </aside>
-        </main>
+                </aside>
+            </main>
+        </div>
     </div>
 
     <script>
@@ -259,14 +326,23 @@
         let displayTimer = null; 
         
         const products = [
-            { code: 'A1', name: 'Sparkling Water', price: 65, stock: 5, icon: '💧' },
-            { code: 'A2', name: 'Energy Bar', price: 95, stock: 3, icon: '🍫' },
-            { code: 'A3', name: 'Almond Crisps', price: 50, stock: 8, icon: '🥨' },
-            { code: 'A4', name: 'Iced Coffee', price: 110, stock: 2, icon: '☕' },
-            { code: 'B1', name: 'Fruit Gummies', price: 40, stock: 10, icon: '🍬' },
-            { code: 'B2', name: 'Protein Shake', price: 130, stock: 1, icon: '🥤' },
-            { code: 'B3', name: 'Mint Gum', price: 25, stock: 12, icon: '🌿' },
-            { code: 'B4', name: 'Dark Chocolate', price: 80, stock: 4, icon: '🖤' },
+            // Row A: Jollibee
+            { code: 'A1', name: 'Chicken Joy', price: 85, stock: 5, icon: '🍗' },
+            { code: 'A2', name: 'Jolly Spaghetti', price: 60, stock: 8, icon: '🍝' },
+            { code: 'A3', name: 'Yum Burger', price: 40, stock: 10, icon: '🍔' },
+            { code: 'A4', name: 'Peach Mango Pie', price: 35, stock: 12, icon: '🥧' },
+            
+            // Row B: McDo
+            { code: 'B1', name: 'Big Mac', price: 110, stock: 4, icon: '🍔' },
+            { code: 'B2', name: 'McDo Fries (L)', price: 65, stock: 10, icon: '🍟' },
+            { code: 'B3', name: 'McSundae', price: 40, stock: 7, icon: '🍨' },
+            { code: 'B4', name: 'McNuggets (6pc)', price: 75, stock: 6, icon: '🐔' },
+            
+            // Row C: Drinks & Snacks
+            { code: 'C1', name: 'Cola Drink', price: 30, stock: 15, icon: '🥤' },
+            { code: 'C2', name: 'Choco Milk', price: 45, stock: 8, icon: '🧃' },
+            { code: 'C3', name: 'Chocolate Bar', price: 50, stock: 9, icon: '🍫' },
+            { code: 'C4', name: 'Mineral Water', price: 25, stock: 20, icon: '💧' },
         ];
 
         // --- DOM Elements ---
@@ -283,28 +359,11 @@
         const detailPriceEl = document.getElementById('detail-price');
         const detailBalanceEl = document.getElementById('detail-balance');
         const detailStatusEl = document.getElementById('detail-status');
+        const emojiBackgroundEl = document.getElementById('emoji-background'); // New emoji background element
 
-        // --- LED CONTROL FUNCTION ---
+        // --- REMOVED: LED CONTROL FUNCTION ---
         function setLedColor(state) {
-            // Remove all specific LED classes first
-            machineEl.classList.remove('led-ready', 'led-error', 'led-success', 'led-default');
-            
-            // Add the correct class based on the state
-            switch(state) {
-                case 'READY':
-                    machineEl.classList.add('led-ready');
-                    break;
-                case 'ERROR':
-                    machineEl.classList.add('led-error');
-                    break;
-                case 'SUCCESS':
-                    machineEl.classList.add('led-success');
-                    break;
-                case 'DEFAULT':
-                default:
-                    machineEl.classList.add('led-default');
-                    break;
-            }
+            // Do nothing, LEDs are removed from this theme
         }
 
         /** Resets and starts the display auto-reset timer. */
@@ -313,7 +372,6 @@
             displayTimer = setTimeout(() => {
                 updateDisplay('IDLE');
                 detailStatusEl.textContent = 'AWAITING INPUT';
-                setLedColor('DEFAULT');
                 setTimeout(() => updateDisplay('SELECT ITEM'), 2000); 
             }, 10000); 
             updateDisplay(message);
@@ -323,7 +381,6 @@
             balanceEl.textContent = `NT$${currentBalance}`;
             messageEl.textContent = message.toUpperCase();
             
-            // Update Transaction Detail Panel
             detailBalanceEl.textContent = `NT$${currentBalance}`;
             
             if (currentPrice > 0) {
@@ -331,29 +388,18 @@
                 
                 if (currentBalance >= currentPrice) {
                     detailStatusEl.textContent = `READY! Change: NT$${currentBalance - currentPrice}`;
-                    detailStatusEl.classList.remove('text-red-500');
-                    detailStatusEl.classList.add('text-green-600');
-                    setLedColor('READY'); // LED: Green
+                    detailStatusEl.classList.remove('status-error');
+                    detailStatusEl.classList.add('status-ready');
                 } else {
                     detailStatusEl.textContent = `NEED NT$${currentPrice - currentBalance}`;
-                    detailStatusEl.classList.remove('text-green-600');
-                    detailStatusEl.classList.add('text-red-500');
-                    setLedColor('ERROR'); // LED: Red
+                    detailStatusEl.classList.remove('status-ready');
+                    detailStatusEl.classList.add('status-error');
                 }
             } else {
                 detailPriceEl.textContent = 'NT$0';
                 detailStatusEl.textContent = message.toUpperCase();
-                detailStatusEl.classList.remove('text-green-600');
-                detailStatusEl.classList.add('text-red-500');
-                
-                // Set to ERROR for specific error messages, otherwise DEFAULT
-                if (['SOLD OUT', 'INVALID CODE', 'NO BALANCE'].includes(message.toUpperCase())) {
-                    setLedColor('ERROR');
-                } else if (message.toUpperCase() === 'CHANGE RETURNED') {
-                    setLedColor('SUCCESS');
-                } else {
-                    setLedColor('DEFAULT'); // LED: Pink
-                }
+                detailStatusEl.classList.remove('status-ready');
+                detailStatusEl.classList.add('status-error');
             }
         }
 
@@ -369,8 +415,8 @@
         function renderProducts() {
             gridEl.innerHTML = products.map(p => `
                 <div id="card-${p.code}" 
-                    class="product-card p-3 rounded-xl shadow-md flex flex-col items-center cursor-pointer border-2 ${p.stock > 0 ? 'hover:bg-gray-50' : 'border-red-400 opacity-60 cursor-not-allowed'}"
-                    onclick="${p.stock > 0 ? `handleProductClick('${p.code}')` : ''}">
+                     class="product-card p-3 rounded-xl shadow-md flex flex-col items-center cursor-pointer border-2 ${p.stock > 0 ? 'hover:bg-gray-50' : 'border-red-400 opacity-60 cursor-not-allowed'}"
+                     onclick="${p.stock > 0 ? `handleProductClick('${p.code}')` : ''}">
                     
                     <div class="w-16 h-16 mb-2 rounded-full flex items-center justify-center emoji-container">
                         <span class="emoji-icon">${p.icon}</span>
@@ -415,30 +461,24 @@
             }
             
             clearTimeout(displayTimer);
-            setLedColor('SUCCESS'); // LED: Gold/Yellow during dispense
 
-            // 1. Create the dropping item element
             const itemElement = document.createElement('div');
             itemElement.className = 'dropping-item';
             itemElement.innerHTML = itemToCollect.icon;
             
-            // 2. Add item and start animation
             droppingContainerEl.appendChild(itemElement);
             trayEl.classList.add('dispensing');
             trayMessageEl.textContent = 'DROPPING!';
             topTrayMessageEl.textContent = `Dispensing ${itemToCollect.name}...`;
 
-            // 3. Complete the transaction after animation
             setTimeout(() => {
                 const changeText = itemToCollect.change > 0 ? ` & Change: NT$${itemToCollect.change}` : '';
                 
-                // Remove the dropping item (it's now "in the tray")
                 droppingContainerEl.innerHTML = ''; 
 
-                topTrayMessageEl.textContent = `💖 Enjoy your ${itemToCollect.name}! ${changeText}`;
+                topTrayMessageEl.textContent = `Enjoy your ${itemToCollect.name}! ${changeText}`;
                 trayMessageEl.textContent = 'COLLECTED';
                 
-                // Reset to default after a delay
                 setTimeout(() => {
                     trayEl.classList.remove('dispensing');
                     trayMessageEl.textContent = 'PUSH';
@@ -488,7 +528,6 @@
                 return;
             }
 
-            // Purchase Successful: Prepare item, then wait for PUSH
             prepareDispense(product);
         }
 
@@ -498,7 +537,6 @@
             const price = product.price;
             const change = currentBalance - price;
 
-            // Update machine state
             currentBalance = 0;
             product.stock--;
             
@@ -507,9 +545,6 @@
             clearSelection(); 
             currentPrice = 0; 
             
-            // Set success state for LED
-            setLedColor('SUCCESS'); // LED: Gold
-
             updateDisplay('PRESS PUSH');
 
             topTrayMessageEl.textContent = `Item ready! Press PUSH to collect.`;
@@ -537,7 +572,6 @@
             currentBalance = 0;
             
             clearSelection();
-            setLedColor('SUCCESS'); // LED: Gold
 
             updateDisplay('CHANGE RETURNED');
             
@@ -546,7 +580,6 @@
 
             trayEl.classList.add('dispensing');
 
-            // Reset tray and LED after 3 seconds
             setTimeout(() => {
                 trayEl.classList.remove('dispensing');
                 trayMessageEl.textContent = 'PUSH';
@@ -555,14 +588,54 @@
             }, 3000);
         }
 
+        // --- FLOATING EMOJI LOGIC ---
+        const floatingEmojis = ['🍔', '🍟', '🥤', '🍦', '🍩', '🍫', '🍕', '🌮', '🥳', '✨']; // More emojis
+        const numEmojis = 20; // Number of emojis to float
+
+        function createFloatingEmoji() {
+            const emoji = document.createElement('span');
+            emoji.classList.add('floating-emoji');
+            emoji.textContent = floatingEmojis[Math.floor(Math.random() * floatingEmojis.length)];
+            
+            // Random start/end positions and animation duration
+            const startX = Math.random() * window.innerWidth * 1.5 - (window.innerWidth * 0.25); // Extend range
+            const startY = Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.25);
+            const endX = Math.random() * window.innerWidth * 1.5 - (window.innerWidth * 0.25);
+            const endY = Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.25);
+            const duration = 10 + Math.random() * 5; // 10-15 seconds
+
+            emoji.style.setProperty('--x-start', `${startX}px`);
+            emoji.style.setProperty('--y-start', `${startY}px`);
+            emoji.style.setProperty('--x-end', `${endX}px`);
+            emoji.style.setProperty('--y-end', `${endY}px`);
+            emoji.style.animationDuration = `${duration}s`;
+            emoji.style.animationDelay = `${-Math.random() * duration}s`; // Stagger start times
+
+            emojiBackgroundEl.appendChild(emoji);
+
+            // Remove emoji after animation to prevent DOM bloat (adjust delay if needed)
+            setTimeout(() => {
+                emoji.remove();
+                createFloatingEmoji(); // Recreate new emoji to maintain count
+            }, duration * 1000);
+        }
+
         // --- Initialization ---
         window.onload = () => {
             renderProducts();
             document.getElementById('push-area').addEventListener('click', simulateDispenseAnimation);
             resetDisplayTimer(); // Start the idle timer
-            setLedColor('DEFAULT'); // Initial LED state
+
+            // Create initial set of floating emojis
+            for (let i = 0; i < numEmojis; i++) {
+                createFloatingEmoji();
+            }
+
+            // Set copyright year dynamically
+            const yearEl = document.getElementById('copyright-year');
+            if (yearEl) yearEl.textContent = new Date().getFullYear();
         };
 
     </script>
 </body>
-</html>
+</html> 

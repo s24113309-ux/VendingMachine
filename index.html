@@ -68,21 +68,24 @@
         /* --- VENDING MACHINE SIZE ADJUSTMENT --- */
         .vending-machine-wrapper { /* New wrapper for overall machine sizing */
             width: 100%;
-            max-width: 900px; /* Reduced max-width for better fit */
-            border: 4px solid var(--machine-border);
+            max-width: 700px; /* Slightly reduced max-width */
+            border: 3px solid var(--machine-border);
             background-color: var(--machine-accent);
-            border-radius: 1.5rem; /* Rounded corners for the outer panel */
-            padding: 0.5rem; /* Reduced padding for the outer panel */
+            border-radius: 1rem; /* Rounded corners for the outer panel */
+            padding: 0.35rem; /* Slightly more room horizontally */
             position: relative;
             z-index: 10; /* Ensure machine is above emojis */
+            /* Scale the whole machine to ~85% (smaller than previous 92%) */
+            transform: scale(0.85);
+            transform-origin: top center;
         }
 
         #vending-machine {
             background: var(--machine-bg);
             border: none; /* Border now on the wrapper */
             width: 100%;
-            border-radius: 1rem; /* Slightly smaller border-radius inside */
-            padding: 1.5rem; /* Reduced padding inside */
+            border-radius: 0.9rem; /* Slightly smaller border-radius inside */
+            padding: 0.6rem; /* Make internal spacing compact so details remain visible */
         }
         
         /* --- REMOVED LED STYLES --- */
@@ -105,9 +108,13 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .emoji-icon {
-            font-size: 2.5rem; 
+            font-size: 2rem; 
             line-height: 1;
         }
+
+        /* make product cards more compact so the whole machine fits */
+        .product-card { padding: 0.6rem !important; }
+        .product-card p { margin: 0.15rem 0; font-size: 0.92rem; }
         
         /* --- DISPENSE TRAY STYLES (Simplified) --- */
         #glam-tray-wrapper { 
@@ -115,10 +122,10 @@
         }
         
         #dispense-tray {
-            height: 120px; /* Slightly reduced tray height */
-            border: 4px solid var(--machine-border) !important;
+            height: 90px; /* Slightly reduced tray height to save vertical space */
+            border: 3px solid var(--machine-border) !important;
             background-color: var(--tray-bg) !important;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.08);
         }
         
         .push-flap {
@@ -145,8 +152,8 @@
             position: absolute;
             top: 10px;
             left: 50%;
-            width: 80px; 
-            height: 80px; 
+            width: 64px; 
+            height: 64px; 
             border-radius: 50%;
             background-color: var(--selected-gold); 
             animation: drop-down 1.2s ease-out forwards;
@@ -155,7 +162,29 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.5rem;
+            font-size: 2.5rem;
+        }
+
+        /* Responsive tweaks to ensure the machine fits smaller screens */
+        @media (max-width: 768px) {
+            .vending-machine-wrapper { max-width: 100%; padding: 0.2rem; border-width: 2px; }
+            #vending-machine { padding: 0.5rem; }
+            .product-card { padding: 0.5rem; }
+            .emoji-icon { font-size: 1.6rem; }
+            #dispense-tray { height: 90px; }
+            .receipt-card { width: 300px; }
+            /* make aside smaller on narrow screens */
+            .vending-machine-wrapper main aside { flex-basis: 32%; }
+            .vending-machine-wrapper main section { flex-basis: 68%; }
+        }
+
+        /* Extra compact mode for short viewports */
+        @media (max-height: 720px) {
+            body { padding: 0.5rem; }
+            #vending-machine h1 { font-size: 1.25rem; }
+            .product-card p { font-size: 0.85rem; }
+            #display-screen { height: 56px; }
+            #dispense-tray { height: 80px; }
         }
         
         /* --- NEW THEME FOR CONTROL PANEL --- */
@@ -231,6 +260,47 @@
         }
         .site-footer a { color: var(--text-dark); text-decoration: none; font-weight: 600; }
 
+        /* Floating receipt button (bottom-right) */
+        .receipt-button {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            background: linear-gradient(180deg,#fff 0%, #f7f7f7 100%);
+            border: 2px solid var(--machine-border);
+            width: 56px;
+            height: 64px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 60;
+        }
+        .receipt-button .paper-icon { font-size: 1.6rem; }
+
+        /* Small receipt panel that appears above the button */
+        .receipt-panel {
+            position: fixed;
+            right: 18px;
+            bottom: 92px; /* sits above the button */
+            width: 280px;
+            max-width: calc(100% - 40px);
+            background: #fff;
+            border: 2px solid var(--machine-border);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            padding: 12px;
+            z-index: 65;
+            display: none; /* toggled by JS */
+        }
+        .receipt-panel h4 { margin: 0 0 6px 0; font-size: 1rem; }
+        .receipt-lines { font-family: monospace; font-size: 0.9rem; color: var(--text-dark); }
+        .receipt-barcode { margin-top: 8px; height: 36px; display:flex; gap:2px; align-items:center; }
+        .receipt-barcode .bar { background: #111; height: 100%; width: 2px; }
+        .receipt-panel .close-btn { margin-top:8px; display:block; text-align:right; }
+        .receipt-panel .close-btn button { background: transparent; border: none; color: var(--error-color); cursor: pointer; font-weight:700; }
+
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -239,19 +309,19 @@
     <div class="vending-machine-wrapper">
         <div id="vending-machine" class="w-full rounded-2xl">
 
-            <header class="text-center mb-6">
+            <header class="text-center mb-4">
                 <h1 class="text-3xl md:text-4xl font-extrabold" style="color: var(--text-dark);">Simple Vender NTD</h1>
                 <p class="text-gray-600 mt-1">Select an item.</p>
             </header>
 
-            <main class="flex flex-col lg:flex-row gap-6">
+            <main class="flex flex-col lg:flex-row gap-4">
 
                 <section class="lg:w-3/4 p-4 bg-gray-100 rounded-2xl shadow-inner">
                     <h2 class="text-xl font-bold mb-4 border-b border-gray-300 pb-2" style="color: var(--text-dark);">Select an Item</h2>
                     <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         </div>
                     
-                    <div id="glam-tray-wrapper" class="mt-8 pt-4 flex flex-col items-center relative overflow-hidden rounded-2xl p-4">
+                    <div id="glam-tray-wrapper" class="mt-8 pt-4 flex flex-col items-center relative overflow-hidden rounded-2xl p-3">
                         <div id="dispense-tray" class="w-full h-40 rounded-lg flex flex-col items-center justify-center relative overflow-hidden z-10">
                             
                             <div id="push-area" class="push-flap absolute bottom-0 w-full h-3/4 flex items-center justify-center">
@@ -317,325 +387,388 @@
         </div>
     </div>
 
+    <div id="receipt-panel" class="receipt-panel" aria-hidden="true">
+        <h4>Receipt</h4>
+        <div id="receipt-content" class="receipt-lines">No receipts yet.</div>
+        <div id="receipt-barcode" class="receipt-barcode" aria-hidden="true"></div>
+        <div class="close-btn"><button id="close-receipt-btn">CLOSE</button></div>
+    </div>
+
+    <div id="receipt-button" class="receipt-button" title="Show receipt">
+        <span class="paper-icon">🧾</span>
+    </div>
+
     <script>
-        // --- Vending Machine State and Data ---
-        let currentBalance = 0;
-        let selectedProduct = null;
-        let itemToCollect = null; 
-        let currentPrice = 0;
-        let displayTimer = null; 
+    // --- Vending Machine State and Data ---
+    let currentBalance = 0;
+    let selectedProduct = null;
+    let itemToCollect = null; 
+    let currentPrice = 0;
+    let displayTimer = null; 
+    let lastTransaction = null; // store last transaction for receipt
         
-        const products = [
-            // Row A: Jollibee
-            { code: 'A1', name: 'Chicken Joy', price: 85, stock: 5, icon: '🍗' },
-            { code: 'A2', name: 'Jolly Spaghetti', price: 60, stock: 8, icon: '🍝' },
-            { code: 'A3', name: 'Yum Burger', price: 40, stock: 10, icon: '🍔' },
-            { code: 'A4', name: 'Peach Mango Pie', price: 35, stock: 12, icon: '🥧' },
-            
-            // Row B: McDo
-            { code: 'B1', name: 'Big Mac', price: 110, stock: 4, icon: '🍔' },
-            { code: 'B2', name: 'McDo Fries (L)', price: 65, stock: 10, icon: '🍟' },
-            { code: 'B3', name: 'McSundae', price: 40, stock: 7, icon: '🍨' },
-            { code: 'B4', name: 'McNuggets (6pc)', price: 75, stock: 6, icon: '🐔' },
-            
-            // Row C: Drinks & Snacks
-            { code: 'C1', name: 'Cola Drink', price: 30, stock: 15, icon: '🥤' },
-            { code: 'C2', name: 'Choco Milk', price: 45, stock: 8, icon: '🧃' },
-            { code: 'C3', name: 'Chocolate Bar', price: 50, stock: 9, icon: '🍫' },
-            { code: 'C4', name: 'Mineral Water', price: 25, stock: 20, icon: '💧' },
-        ];
+    const products = [
+        // Row A: Jollibee
+        { code: 'A1', name: 'Chicken Joy', price: 85, stock: 5, icon: '🍗' },
+        { code: 'A2', name: 'Jolly Spaghetti', price: 60, stock: 8, icon: '🍝' },
+        { code: 'A3', name: 'Yum Burger', price: 40, stock: 10, icon: '🍔' },
+        { code: 'A4', name: 'Peach Mango Pie', price: 35, stock: 12, icon: '🥧' },
+        
+        // Row B: McDo
+        { code: 'B1', name: 'Big Mac', price: 110, stock: 4, icon: '🍔' },
+        { code: 'B2', name: 'McDo Fries (L)', price: 65, stock: 10, icon: '🍟' },
+        { code: 'B3', name: 'McSundae', price: 40, stock: 7, icon: '🍨' },
+        { code: 'B4', name: 'McNuggets (6pc)', price: 75, stock: 6, icon: '🐔' },
+        
+        // Row C: Drinks & Snacks
+        { code: 'C1', name: 'Cola Drink', price: 30, stock: 15, icon: '🥤' },
+        { code: 'C2', name: 'Choco Milk', price: 45, stock: 8, icon: '🧃' },
+        { code: 'C3', name: 'Chocolate Bar', price: 50, stock: 9, icon: '🍫' },
+        { code: 'C4', name: 'Mineral Water', price: 25, stock: 20, icon: '💧' },
+    ];
 
-        // --- DOM Elements ---
-        const machineEl = document.getElementById('vending-machine');
-        const balanceEl = document.getElementById('current-balance');
-        const messageEl = document.getElementById('message');
-        const gridEl = document.getElementById('product-grid');
-        const inputEl = document.getElementById('selection-input');
-        const trayEl = document.getElementById('dispense-tray');
-        const pushAreaEl = document.getElementById('push-area'); 
-        const trayMessageEl = document.getElementById('tray-message'); 
-        const topTrayMessageEl = document.getElementById('top-tray-message'); 
-        const droppingContainerEl = document.getElementById('dropping-container'); 
-        const detailPriceEl = document.getElementById('detail-price');
-        const detailBalanceEl = document.getElementById('detail-balance');
-        const detailStatusEl = document.getElementById('detail-status');
-        const emojiBackgroundEl = document.getElementById('emoji-background'); // New emoji background element
+    // --- DOM Elements ---
+    const machineEl = document.getElementById('vending-machine');
+    const balanceEl = document.getElementById('current-balance');
+    const messageEl = document.getElementById('message');
+    const gridEl = document.getElementById('product-grid');
+    const inputEl = document.getElementById('selection-input');
+    const trayEl = document.getElementById('dispense-tray');
+    const pushAreaEl = document.getElementById('push-area'); 
+    const trayMessageEl = document.getElementById('tray-message'); 
+    const topTrayMessageEl = document.getElementById('top-tray-message'); 
+    const droppingContainerEl = document.getElementById('dropping-container'); 
+    const detailPriceEl = document.getElementById('detail-price');
+    const detailBalanceEl = document.getElementById('detail-balance');
+    const detailStatusEl = document.getElementById('detail-status');
+    const emojiBackgroundEl = document.getElementById('emoji-background'); // New emoji background element
 
-        // --- REMOVED: LED CONTROL FUNCTION ---
-        function setLedColor(state) {
-            // Do nothing, LEDs are removed from this theme
-        }
+    // --- REMOVED: LED CONTROL FUNCTION ---
+    function setLedColor(state) {
+        // Do nothing, LEDs are removed from this theme
+    }
 
-        /** Resets and starts the display auto-reset timer. */
-        function resetDisplayTimer(message = 'SELECT ITEM') {
-            clearTimeout(displayTimer);
-            displayTimer = setTimeout(() => {
-                updateDisplay('IDLE');
-                detailStatusEl.textContent = 'AWAITING INPUT';
-                setTimeout(() => updateDisplay('SELECT ITEM'), 2000); 
-            }, 10000); 
-            updateDisplay(message);
-        }
+    /** Resets and starts the display auto-reset timer. */
+    function resetDisplayTimer(message = 'SELECT ITEM') {
+        clearTimeout(displayTimer);
+        displayTimer = setTimeout(() => {
+            updateDisplay('IDLE');
+            detailStatusEl.textContent = 'AWAITING INPUT';
+            setTimeout(() => updateDisplay('SELECT ITEM'), 2000); 
+        }, 10000); 
+        updateDisplay(message);
+    }
 
-        function updateDisplay(message = 'SELECT ITEM') {
-            balanceEl.textContent = `NT$${currentBalance}`;
-            messageEl.textContent = message.toUpperCase();
+    function updateDisplay(message = 'SELECT ITEM') {
+        balanceEl.textContent = `NT$${currentBalance}`;
+        messageEl.textContent = message.toUpperCase();
+        
+        detailBalanceEl.textContent = `NT$${currentBalance}`;
+        
+        if (currentPrice > 0) {
+            detailPriceEl.textContent = `NT$${currentPrice}`;
             
-            detailBalanceEl.textContent = `NT$${currentBalance}`;
-            
-            if (currentPrice > 0) {
-                detailPriceEl.textContent = `NT$${currentPrice}`;
-                
-                if (currentBalance >= currentPrice) {
-                    detailStatusEl.textContent = `READY! Change: NT$${currentBalance - currentPrice}`;
-                    detailStatusEl.classList.remove('status-error');
-                    detailStatusEl.classList.add('status-ready');
-                } else {
-                    detailStatusEl.textContent = `NEED NT$${currentPrice - currentBalance}`;
-                    detailStatusEl.classList.remove('status-ready');
-                    detailStatusEl.classList.add('status-error');
-                }
+            if (currentBalance >= currentPrice) {
+                detailStatusEl.textContent = `READY! Change: NT$${currentBalance - currentPrice}`;
+                detailStatusEl.classList.remove('status-error');
+                detailStatusEl.classList.add('status-ready');
             } else {
-                detailPriceEl.textContent = 'NT$0';
-                detailStatusEl.textContent = message.toUpperCase();
+                detailStatusEl.textContent = `NEED NT$${currentPrice - currentBalance}`;
                 detailStatusEl.classList.remove('status-ready');
                 detailStatusEl.classList.add('status-error');
             }
+        } else {
+            detailPriceEl.textContent = 'NT$0';
+            detailStatusEl.textContent = message.toUpperCase();
+            detailStatusEl.classList.remove('status-ready');
+            detailStatusEl.classList.add('status-error');
         }
+    }
 
-        function clearSelection() {
-            document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected-card'));
-            selectedProduct = null;
+    function clearSelection() {
+        document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected-card'));
+        selectedProduct = null;
+        inputEl.value = '';
+        currentPrice = 0;
+        updateDisplay();
+    }
+
+    /** Renders the product grid dynamically using EMOJIS. */
+    function renderProducts() {
+        gridEl.innerHTML = products.map(p => `
+            <div id="card-${p.code}" 
+                 class="product-card p-3 rounded-xl shadow-md flex flex-col items-center cursor-pointer border-2 ${p.stock > 0 ? 'hover:bg-gray-50' : 'border-red-400 opacity-60 cursor-not-allowed'}"
+                 onclick="${p.stock > 0 ? `handleProductClick('${p.code}')` : ''}">
+                
+                <div class="w-16 h-16 mb-2 rounded-full flex items-center justify-center emoji-container">
+                    <span class="emoji-icon">${p.icon}</span>
+                </div>
+
+                <p class="text-sm font-semibold text-gray-900 truncate w-full text-center">${p.name}</p>
+                <p class="text-xs text-gray-500 mt-1">CODE: <span class="font-bold text-lg text-blue-500">${p.code}</span></p>
+                <p class="text-xs font-medium text-green-600">NT$${p.price}</p>
+                <p class="text-xs text-gray-400 mt-1">Stock: ${p.stock > 0 ? p.stock : 'OUT'}</p>
+            </div>
+        `).join('');
+        updateDisplay('SELECT ITEM');
+    }
+
+    function handleProductClick(code) {
+        const product = products.find(p => p.code === code);
+        
+        clearSelection(); 
+
+        if (product && product.stock > 0) {
+            inputEl.value = code;
+            currentPrice = product.price;
+            selectedProduct = product;
+            
+            document.getElementById(`card-${product.code}`).classList.add('selected-card');
+
+            resetDisplayTimer(`READY TO BUY ${code}`);
+            updateDisplay(); 
+        } else {
+            updateDisplay('SOLD OUT');
             inputEl.value = '';
             currentPrice = 0;
-            updateDisplay();
         }
+    }
 
-        /** Renders the product grid dynamically using EMOJIS. */
-        function renderProducts() {
-            gridEl.innerHTML = products.map(p => `
-                <div id="card-${p.code}" 
-                     class="product-card p-3 rounded-xl shadow-md flex flex-col items-center cursor-pointer border-2 ${p.stock > 0 ? 'hover:bg-gray-50' : 'border-red-400 opacity-60 cursor-not-allowed'}"
-                     onclick="${p.stock > 0 ? `handleProductClick('${p.code}')` : ''}">
-                    
-                    <div class="w-16 h-16 mb-2 rounded-full flex items-center justify-center emoji-container">
-                        <span class="emoji-icon">${p.icon}</span>
-                    </div>
-
-                    <p class="text-sm font-semibold text-gray-900 truncate w-full text-center">${p.name}</p>
-                    <p class="text-xs text-gray-500 mt-1">CODE: <span class="font-bold text-lg text-blue-500">${p.code}</span></p>
-                    <p class="text-xs font-medium text-green-600">NT$${p.price}</p>
-                    <p class="text-xs text-gray-400 mt-1">Stock: ${p.stock > 0 ? p.stock : 'OUT'}</p>
-                </div>
-            `).join('');
-            updateDisplay('SELECT ITEM');
+    /** Simulates the item dropping into the tray when the PUSH button is clicked. */
+    function simulateDispenseAnimation() {
+        if (!itemToCollect) {
+            updateDisplay('NOTHING TO COLLECT');
+            topTrayMessageEl.textContent = 'Please select and pay for an item first.';
+            return;
         }
+        
+        clearTimeout(displayTimer);
 
-        function handleProductClick(code) {
-            const product = products.find(p => p.code === code);
+        const itemElement = document.createElement('div');
+        itemElement.className = 'dropping-item';
+        itemElement.innerHTML = itemToCollect.icon;
+        
+        droppingContainerEl.appendChild(itemElement);
+        trayEl.classList.add('dispensing');
+        trayMessageEl.textContent = 'DROPPING!';
+        topTrayMessageEl.textContent = `Dispensing ${itemToCollect.name}...`;
+
+        setTimeout(() => {
+            const changeText = itemToCollect.change > 0 ? ` & Change: NT$${itemToCollect.change}` : '';
             
-            clearSelection(); 
+            droppingContainerEl.innerHTML = ''; 
 
-            if (product && product.stock > 0) {
-                inputEl.value = code;
-                currentPrice = product.price;
-                selectedProduct = product;
-                
-                document.getElementById(`card-${product.code}`).classList.add('selected-card');
-
-                resetDisplayTimer(`READY TO BUY ${code}`);
-                updateDisplay(); 
-            } else {
-                updateDisplay('SOLD OUT');
-                inputEl.value = '';
-                currentPrice = 0;
-            }
-        }
-
-        /** Simulates the item dropping into the tray when the PUSH button is clicked. */
-        function simulateDispenseAnimation() {
-            if (!itemToCollect) {
-                updateDisplay('NOTHING TO COLLECT');
-                topTrayMessageEl.textContent = 'Please select and pay for an item first.';
-                return;
-            }
+            topTrayMessageEl.textContent = `Enjoy your ${itemToCollect.name}! ${changeText}`;
+            trayMessageEl.textContent = 'COLLECTED';
             
-            clearTimeout(displayTimer);
-
-            const itemElement = document.createElement('div');
-            itemElement.className = 'dropping-item';
-            itemElement.innerHTML = itemToCollect.icon;
-            
-            droppingContainerEl.appendChild(itemElement);
-            trayEl.classList.add('dispensing');
-            trayMessageEl.textContent = 'DROPPING!';
-            topTrayMessageEl.textContent = `Dispensing ${itemToCollect.name}...`;
-
-            setTimeout(() => {
-                const changeText = itemToCollect.change > 0 ? ` & Change: NT$${itemToCollect.change}` : '';
-                
-                droppingContainerEl.innerHTML = ''; 
-
-                topTrayMessageEl.textContent = `Enjoy your ${itemToCollect.name}! ${changeText}`;
-                trayMessageEl.textContent = 'COLLECTED';
-                
-                setTimeout(() => {
-                    trayEl.classList.remove('dispensing');
-                    trayMessageEl.textContent = 'PUSH';
-                    topTrayMessageEl.textContent = 'Your items and change will appear here.';
-                    itemToCollect = null;
-                    renderProducts(); // Re-render to update stock count
-                    resetDisplayTimer();
-                }, 4000);
-
-            }, 1200); 
-        }
-
-        // --- Vending Machine Core Logic ---
-
-        function insertMoney(amount) {
-            if (itemToCollect) {
-                updateDisplay('COLLECT ITEM FIRST');
-                topTrayMessageEl.textContent = 'Please collect your dispensed item!';
-                return;
-            }
-            currentBalance += amount;
-            resetDisplayTimer('BALANCE UPDATED');
-            topTrayMessageEl.textContent = `Current credit: NT$${currentBalance}`;
-            updateDisplay(); 
-        }
-
-        function selectProduct() {
-            const code = inputEl.value.toUpperCase().trim();
-            let product = selectedProduct || products.find(p => p.code === code);
-            
-            if (!product) {
-                updateDisplay('INVALID CODE');
-                topTrayMessageEl.textContent = `Product code "${code}" is invalid.`; 
-                return;
-            }
-
-            if (product.stock <= 0) {
-                updateDisplay('SOLD OUT');
-                topTrayMessageEl.textContent = `${product.name} is out of stock.`; 
-                return;
-            }
-
-            if (currentBalance < product.price) {
-                const needed = product.price - currentBalance;
-                updateDisplay(`NEED NT$${needed}`);
-                topTrayMessageEl.textContent = `Insert NT$${needed} for ${product.name}.`; 
-                return;
-            }
-
-            prepareDispense(product);
-        }
-
-        /** Dispenses the item, updates stock, and prepares for the animation. */
-        function prepareDispense(product) {
-            
-            const price = product.price;
-            const change = currentBalance - price;
-
-            currentBalance = 0;
-            product.stock--;
-            
-            itemToCollect = { ...product, change: change };
-
-            clearSelection(); 
-            currentPrice = 0; 
-            
-            updateDisplay('PRESS PUSH');
-
-            topTrayMessageEl.textContent = `Item ready! Press PUSH to collect.`;
-            trayMessageEl.textContent = 'READY!';
-            trayEl.classList.add('dispensing');
-
-            clearTimeout(displayTimer);
-        }
-
-
-        /** Returns the current balance as change. */
-        function returnChange() {
-            if (currentBalance === 0) {
-                updateDisplay('NO BALANCE');
-                topTrayMessageEl.textContent = 'Your balance is already zero.'; 
-                return;
-            }
-            if (itemToCollect) {
-                updateDisplay('COLLECT ITEM FIRST');
-                topTrayMessageEl.textContent = 'Please collect your dispensed item before change.';
-                return;
-            }
-            
-            const changeAmount = currentBalance;
-            currentBalance = 0;
-            
-            clearSelection();
-
-            updateDisplay('CHANGE RETURNED');
-            
-            trayMessageEl.textContent = `CHANGE!`;
-            topTrayMessageEl.textContent = `Returning NT$${changeAmount}...`;
-
-            trayEl.classList.add('dispensing');
-
             setTimeout(() => {
                 trayEl.classList.remove('dispensing');
                 trayMessageEl.textContent = 'PUSH';
                 topTrayMessageEl.textContent = 'Your items and change will appear here.';
+                itemToCollect = null;
+                renderProducts(); // Re-render to update stock count
                 resetDisplayTimer();
-            }, 3000);
+            }, 4000);
+
+        }, 1200); 
+    }
+
+    // --- Vending Machine Core Logic ---
+
+    function insertMoney(amount) {
+        if (itemToCollect) {
+            updateDisplay('COLLECT ITEM FIRST');
+            topTrayMessageEl.textContent = 'Please collect your dispensed item!';
+            return;
+        }
+        currentBalance += amount;
+        resetDisplayTimer('BALANCE UPDATED');
+        topTrayMessageEl.textContent = `Current credit: NT$${currentBalance}`;
+        updateDisplay(); 
+    }
+
+    function selectProduct() {
+        const code = inputEl.value.toUpperCase().trim();
+        let product = selectedProduct || products.find(p => p.code === code);
+        
+        if (!product) {
+            updateDisplay('INVALID CODE');
+            topTrayMessageEl.textContent = `Product code "${code}" is invalid.`; 
+            return;
         }
 
-        // --- FLOATING EMOJI LOGIC ---
-        const floatingEmojis = ['🍔', '🍟', '🥤', '🍦', '🍩', '🍫', '🍕', '🌮', '🥳', '✨']; // More emojis
-        const numEmojis = 20; // Number of emojis to float
-
-        function createFloatingEmoji() {
-            const emoji = document.createElement('span');
-            emoji.classList.add('floating-emoji');
-            emoji.textContent = floatingEmojis[Math.floor(Math.random() * floatingEmojis.length)];
-            
-            // Random start/end positions and animation duration
-            const startX = Math.random() * window.innerWidth * 1.5 - (window.innerWidth * 0.25); // Extend range
-            const startY = Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.25);
-            const endX = Math.random() * window.innerWidth * 1.5 - (window.innerWidth * 0.25);
-            const endY = Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.25);
-            const duration = 10 + Math.random() * 5; // 10-15 seconds
-
-            emoji.style.setProperty('--x-start', `${startX}px`);
-            emoji.style.setProperty('--y-start', `${startY}px`);
-            emoji.style.setProperty('--x-end', `${endX}px`);
-            emoji.style.setProperty('--y-end', `${endY}px`);
-            emoji.style.animationDuration = `${duration}s`;
-            emoji.style.animationDelay = `${-Math.random() * duration}s`; // Stagger start times
-
-            emojiBackgroundEl.appendChild(emoji);
-
-            // Remove emoji after animation to prevent DOM bloat (adjust delay if needed)
-            setTimeout(() => {
-                emoji.remove();
-                createFloatingEmoji(); // Recreate new emoji to maintain count
-            }, duration * 1000);
+        if (product.stock <= 0) {
+            updateDisplay('SOLD OUT');
+            topTrayMessageEl.textContent = `${product.name} is out of stock.`; 
+            return;
         }
 
-        // --- Initialization ---
-        window.onload = () => {
-            renderProducts();
-            document.getElementById('push-area').addEventListener('click', simulateDispenseAnimation);
-            resetDisplayTimer(); // Start the idle timer
+        if (currentBalance < product.price) {
+            const needed = product.price - currentBalance;
+            updateDisplay(`NEED NT$${needed}`);
+            topTrayMessageEl.textContent = `Insert NT$${needed} for ${product.name}.`; 
+            return;
+        }
 
-            // Create initial set of floating emojis
-            for (let i = 0; i < numEmojis; i++) {
-                createFloatingEmoji();
-            }
+        prepareDispense(product);
+    }
 
-            // Set copyright year dynamically
-            const yearEl = document.getElementById('copyright-year');
-            if (yearEl) yearEl.textContent = new Date().getFullYear();
+    /** Dispenses the item, updates stock, and prepares for the animation. */
+    function prepareDispense(product) {
+        
+        const price = product.price;
+        const change = currentBalance - price;
+
+        currentBalance = 0;
+        product.stock--;
+        
+        itemToCollect = { ...product, change: change };
+
+        // Capture last transaction details for the receipt floating panel
+        lastTransaction = {
+            code: product.code,
+            name: product.name,
+            price: price,
+            change: change,
+            time: new Date().toLocaleString()
         };
+
+        clearSelection(); 
+        currentPrice = 0; 
+        
+        updateDisplay('PRESS PUSH');
+
+        topTrayMessageEl.textContent = `Item ready! Press PUSH to collect.`;
+        trayMessageEl.textContent = 'READY!';
+        trayEl.classList.add('dispensing');
+
+        clearTimeout(displayTimer);
+    }
+
+
+    /** Returns the current balance as change. */
+    function returnChange() {
+        if (currentBalance === 0) {
+            updateDisplay('NO BALANCE');
+            topTrayMessageEl.textContent = 'Your balance is already zero.'; 
+            return;
+        }
+        if (itemToCollect) {
+            updateDisplay('COLLECT ITEM FIRST');
+            topTrayMessageEl.textContent = 'Please collect your dispensed item before change.';
+            return;
+        }
+        
+        const changeAmount = currentBalance;
+        currentBalance = 0;
+        
+        clearSelection();
+
+        updateDisplay('CHANGE RETURNED');
+        
+        trayMessageEl.textContent = `CHANGE!`;
+        topTrayMessageEl.textContent = `Returning NT$${changeAmount}...`;
+
+        trayEl.classList.add('dispensing');
+
+        setTimeout(() => {
+            trayEl.classList.remove('dispensing');
+            trayMessageEl.textContent = 'PUSH';
+            topTrayMessageEl.textContent = 'Your items and change will appear here.';
+            resetDisplayTimer();
+        }, 3000);
+    }
+
+    // --- FLOATING EMOJI LOGIC ---
+    const floatingEmojis = ['🍔', '🍟', '🥤', '🍦', '🍩', '🍫', '🍕', '🌮', '🥳', '✨']; // More emojis
+    const numEmojis = 20; // Number of emojis to float
+
+    function createFloatingEmoji() {
+        const emoji = document.createElement('span');
+        emoji.classList.add('floating-emoji');
+        emoji.textContent = floatingEmojis[Math.floor(Math.random() * floatingEmojis.length)];
+        
+        // Random start/end positions and animation duration
+        const startX = Math.random() * window.innerWidth * 1.5 - (window.innerWidth * 0.25); // Extend range
+        const startY = Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.25);
+        const endX = Math.random() * window.innerWidth * 1.5 - (window.innerWidth * 0.25);
+        const endY = Math.random() * window.innerHeight * 1.5 - (window.innerHeight * 0.25);
+        const duration = 10 + Math.random() * 5; // 10-15 seconds
+
+        emoji.style.setProperty('--x-start', `${startX}px`);
+        emoji.style.setProperty('--y-start', `${startY}px`);
+        emoji.style.setProperty('--x-end', `${endX}px`);
+        emoji.style.setProperty('--y-end', `${endY}px`);
+        emoji.style.animationDuration = `${duration}s`;
+        emoji.style.animationDelay = `${-Math.random() * duration}s`; // Stagger start times
+
+        emojiBackgroundEl.appendChild(emoji);
+
+        // Remove emoji after animation to prevent DOM bloat (adjust delay if needed)
+        setTimeout(() => {
+            emoji.remove();
+            createFloatingEmoji(); // Recreate new emoji to maintain count
+        }, duration * 1000);
+    }
+
+    // --- Initialization ---
+    window.onload = () => {
+        renderProducts();
+        document.getElementById('push-area').addEventListener('click', simulateDispenseAnimation);
+        resetDisplayTimer(); // Start the idle timer
+
+        // Create initial set of floating emojis
+        for (let i = 0; i < numEmojis; i++) {
+            createFloatingEmoji();
+        }
+
+        // Set copyright year dynamically
+        const yearEl = document.getElementById('copyright-year');
+        if (yearEl) yearEl.textContent = new Date().getFullYear();
+        
+        // --- (COMPLETED) Receipt button wiring ---
+        const receiptBtn = document.getElementById('receipt-button');
+        const receiptPane = document.getElementById('receipt-panel');
+        const receiptContent = document.getElementById('receipt-content');
+        const receiptBarcode = document.getElementById('receipt-barcode');
+        const closeReceiptBtn = document.getElementById('close-receipt-btn');
+
+        // Function to show the receipt
+        receiptBtn.addEventListener('click', () => {
+            if (lastTransaction) {
+                // Format the receipt text
+                receiptContent.innerHTML = `
+                    Item: ${lastTransaction.name} (${lastTransaction.code})<br>
+                    Price: NT$${lastTransaction.price}<br>
+                    Change: NT$${lastTransaction.change}<br>
+                    --------------------<br>
+                    Time: ${lastTransaction.time}
+                `;
+                
+                // Generate a simple fake barcode
+                receiptBarcode.innerHTML = ''; // Clear old barcode
+                for(let i = 0; i < 40; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.width = `${Math.random() * 2 + 1}px`; // Random width
+                    receiptBarcode.appendChild(bar);
+                }
+
+            } else {
+                receiptContent.innerHTML = 'No recent transactions.';
+                receiptBarcode.innerHTML = ''; // Clear barcode
+            }
+            receiptPane.style.display = 'block';
+            receiptPane.setAttribute('aria-hidden', 'false');
+        });
+
+        // Function to close the receipt
+        closeReceiptBtn.addEventListener('click', () => {
+            receiptPane.style.display = 'none';
+            receiptPane.setAttribute('aria-hidden', 'true');
+        });
+    };
 
     </script>
 </body>
-</html> 
+</html>
